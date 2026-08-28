@@ -1,0 +1,929 @@
+:root {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --panel-2: #27364b;
+  --nav: #0b1526;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #f59e0b;
+  --accent-2: #fbbf24;
+  --green: #22c55e;
+  --purple: #a78bfa;
+  --danger: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  height: 100%;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+/* ---------- Topbar: Geld immer im Blick ---------- */
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 8px) 14px 8px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-2);
+  z-index: 5;
+}
+
+.coin-count {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-2);
+  line-height: 1.1;
+}
+
+.cps {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.boost {
+  font-size: 0.75rem;
+  color: #fb923c;
+  margin-top: 2px;
+}
+
+.gems {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--purple);
+  white-space: nowrap;
+}
+
+/* ---------- Hauptbereich ---------- */
+.game-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+}
+
+/* ---------- Münze: immer sichtbar ---------- */
+.tap-area {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 10px;
+}
+
+.coin-btn {
+  position: relative;
+  width: clamp(120px, 32vw, 170px);
+  height: clamp(120px, 32vw, 170px);
+  border-radius: 50%;
+  border: 5px solid #b45309;
+  background: radial-gradient(circle at 35% 30%, #fde047, #f59e0b 55%, #b45309);
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.35), inset 0 -8px 18px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.06s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coin-btn:active {
+  transform: scale(0.93);
+}
+
+.coin-emoji {
+  font-size: clamp(3.2rem, 15vw, 4.6rem);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+}
+
+.tap-gain {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--accent-2);
+  font-weight: 800;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+/* Floating +N animation */
+.float-gain {
+  position: fixed;
+  pointer-events: none;
+  font-weight: 800;
+  color: var(--accent-2);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  animation: float-up 0.8s ease-out forwards;
+  z-index: 50;
+}
+
+@keyframes float-up {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-90px) scale(1.3); }
+}
+
+/* ---------- Buttons ---------- */
+.ad-btn, .prestige-btn, .daily-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text);
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.ad-btn {
+  background: linear-gradient(90deg, #db2777, #f59e0b);
+}
+
+.prestige-btn {
+  background: var(--purple);
+  color: #1e1b4b;
+}
+
+.daily-btn {
+  color: #052e16;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+}
+
+.ad-btn:active, .prestige-btn:active, .daily-btn:active {
+  transform: scale(0.98);
+}
+
+.ad-btn:disabled, .prestige-btn:disabled, .daily-btn:disabled {
+  filter: grayscale(0.8) opacity(0.55);
+  cursor: not-allowed;
+}
+
+/* ---------- Panel-Bereich (scrollt, wenn nötig) ---------- */
+.panel-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* ---------- Upgrades ---------- */
+.upgrade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.upgrade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel-2);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.upgrade:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.upgrade .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.upgrade .name {
+  font-weight: 700;
+}
+
+.upgrade .desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.upgrade .cost {
+  font-weight: 700;
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+/* ---------- Achievements ---------- */
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.achievement {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.achievement.unlocked {
+  color: var(--text);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.achievement .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.achievement .name {
+  font-weight: 700;
+}
+
+.achievement .desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.achievement .reward {
+  font-weight: 700;
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+/* ---------- Stats ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.reset-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reset-btn:active {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* ---------- Bottom-Navigation ---------- */
+.bottom-nav {
+  flex: none;
+  display: flex;
+  background: var(--nav);
+  border-top: 1px solid var(--panel-2);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 2px 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nav-item .nav-emoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.nav-item.is-active {
+  color: var(--accent-2);
+}
+
+/* ---------- Banner ad ---------- */
+.banner-ad {
+  flex: none;
+  height: 60px;
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020617;
+  color: var(--muted);
+  font-size: 0.78rem;
+  border-top: 1px solid var(--panel-2);
+  z-index: 20;
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 128px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--green);
+  color: #052e16;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  z-index: 60;
+  max-width: 90vw;
+  text-align: center;
+}
+
+/* ---------- Perks (Edelstein-Shop) ---------- */
+.panel h2.sub {
+  margin-top: 14px;
+}
+
+.perk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.perk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel-2);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.perk:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.perk .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perk .name {
+  font-weight: 700;
+}
+
+.perk .desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.perk .cost {
+  font-weight: 700;
+  color: var(--purple);
+  white-space: nowrap;
+}
+
+/* ---------- Minispiele ---------- */
+.minigame-card {
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.minigame-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.minigame-name {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.minigame-head .muted {
+  margin: 2px 0 0;
+}
+
+.mini-btn {
+  flex: none;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #0ea5e9, #6366f1);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mini-btn:disabled {
+  filter: grayscale(0.7) opacity(0.6);
+  cursor: not-allowed;
+}
+
+/* Münzregen */
+.rain-field {
+  position: relative;
+  height: 260px;
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0b1526, #1e293b);
+  border: 1px solid var(--panel-2);
+}
+
+.rain-coin {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  font-size: 1.7rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.rain-coin.gold {
+  font-size: 2rem;
+}
+
+.rain-hud {
+  margin-top: 8px;
+  font-weight: 700;
+  color: var(--accent-2);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Glücksrad */
+.wheel-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 12px auto 0;
+}
+
+.wheel {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 6px solid #b45309;
+  background: conic-gradient(
+    #f59e0b 0deg 45deg, #1e293b 45deg 90deg,
+    #f59e0b 90deg 135deg, #1e293b 135deg 180deg,
+    #f59e0b 180deg 225deg, #1e293b 225deg 270deg,
+    #f59e0b 270deg 315deg, #1e293b 315deg 360deg
+  );
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.6rem;
+  color: #fbbf24;
+  z-index: 2;
+}
+
+/* ---------- Goldene Münze ---------- */
+.tap-area {
+  position: relative;
+}
+
+.golden-coin {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border: none;
+  background: none;
+  font-size: 2.2rem;
+  cursor: pointer;
+  animation: golden-pulse 0.8s ease-in-out infinite;
+  z-index: 6;
+}
+
+@keyframes golden-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.6)); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 14px rgba(251, 191, 36, 1)); }
+}
+
+/* ---------- Tages-Quests ---------- */
+.quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quest {
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quest.done {
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.quest-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.quest-reward {
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+.quest-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.quest-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  transition: width 0.2s ease;
+}
+
+.quest-progress {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ---------- Prestige-Fortschritt ---------- */
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background: #0f172a;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a78bfa, #f59e0b);
+  transition: width 0.3s ease;
+}
+
+/* ---------- Tagesabschluss ---------- */
+.summary-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  color: #1e1b4b;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.summary-btn:active {
+  transform: scale(0.98);
+}
+
+.summary-btn:disabled {
+  filter: grayscale(0.7) opacity(0.6);
+  cursor: not-allowed;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--panel);
+  border: 1px solid var(--panel-2);
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  animation: modal-pop 0.25s ease-out;
+}
+
+@keyframes modal-pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.85rem;
+}
+
+.summary-row span:last-child {
+  font-weight: 700;
+  color: var(--accent-2);
+  white-space: nowrap;
+}
+
+.summary-reward {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent-2);
+  margin: 10px 0 16px;
+}
+
+.summary-close {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  color: #052e16;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+}
+
+/* ---------- Rangliste ---------- */
+.rank-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.rank-tab {
+  flex: 1;
+  padding: 9px 4px;
+  border: none;
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rank-tab.is-active {
+  background: var(--accent);
+  color: #1e1b4b;
+}
+
+.rank-name-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rank-name-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-2);
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.85rem;
+}
+
+.rank-pos {
+  flex: none;
+  width: 34px;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.rank-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.rank-score {
+  flex: none;
+  color: var(--accent-2);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rank-row.me {
+  border: 1px solid rgba(251, 191, 36, 0.6);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.own-score {
+  margin-bottom: 10px;
+}
+
+.own-score-card {
+  background: var(--panel-2);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.own-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.own-total {
+  flex: 1;
+  text-align: right;
+  color: var(--accent-2);
+  font-size: 1.05rem;
+}
+
+.own-rank {
+  color: var(--purple);
+  white-space: nowrap;
+}
+
+.own-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.own-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.own-values {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.own-values strong {
+  color: var(--accent-2);
+}
+
+/* ---------- Sehr kleine Handys ---------- */
+@media (max-height: 700px) {
+  .coin-btn {
+    width: 110px;
+    height: 110px;
+  }
+  .coin-emoji {
+    font-size: 2.8rem;
+  }
+  .tap-area {
+    gap: 8px;
+    padding: 8px 0 6px;
+  }
+  .ad-btn, .prestige-btn, .daily-btn {
+    padding: 10px;
+    font-size: 0.88rem;
+  }
+  .coin-count {
+    font-size: 1.3rem;
+  }
+}

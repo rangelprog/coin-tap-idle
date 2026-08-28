@@ -1,0 +1,10 @@
+name = "coin-tap-idle-events"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# KV-Namespace für Session-/Reward-Speicher.
+# 1) In Cloudflare Dashboard: Workers & Pages → KV → "Create namespace"
+# 2) Die Namespace-ID hier eintragen:
+[[kv_namespaces]]
+binding = "GAME_KV"
+id = "HIER_KV_ID_EINTRAGEN"

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Coin Tap Idle – ein mobiles Idle-Spiel. Tippe, verdiene, upgrade, prestige.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <title>Coin Tap Idle</title>
+</head>
+<body>
+  <!-- Immer sichtbar: Geld + Edelsteine -->
+  <header class="topbar">
+    <div class="stats">
+      <div class="coin-count" id="coin-count" aria-live="polite">0</div>
+      <div class="cps" id="cps">0 Münzen/Sek.</div>
+      <div class="boost" id="boost-indicator" hidden>🔥 2× Boost aktiv</div>
+    </div>
+    <div class="gems" id="gems" title="Edelsteine">💎 0</div>
+  </header>
+
+  <main class="game-view">
+    <!-- Immer sichtbar: die Münze -->
+    <section class="tap-area">
+      <button id="coin-btn" class="coin-btn" aria-label="Münze antippen">
+        <span class="coin-emoji">🪙</span>
+        <span class="tap-gain" id="tap-gain">+1</span>
+      </button>
+      <button id="golden-coin" class="golden-coin" hidden>🌟</button>
+      <button id="boost-btn" class="ad-btn">🎁 2× Boost (Werbung)</button>
+    </section>
+
+    <!-- Tab-Panels: nur eines sichtbar -->
+    <section class="panel-area" id="panel-area">
+      <div class="panel tab-panel is-active" id="panel-upgrades">
+        <h2>Upgrades</h2>
+        <div id="upgrade-list" class="upgrade-list"></div>
+      </div>
+
+      <div class="panel tab-panel" id="panel-daily" hidden>
+        <h2>Täglich</h2>
+        <p class="muted" id="daily-info"></p>
+        <button id="daily-btn" class="daily-btn">🎁 Tagesbelohnung abholen</button>
+
+        <h2 class="sub">Tages-Quests</h2>
+        <div id="quest-list" class="quest-list"></div>
+
+        <h2 class="sub">Tagesabschluss</h2>
+        <p class="muted" id="summary-info"></p>
+        <button id="summary-btn" class="summary-btn">🌙 Bericht ansehen & Belohnung holen</button>
+      </div>
+
+      <div class="panel tab-panel" id="panel-achievements" hidden>
+        <h2>Erfolge</h2>
+        <div id="achievement-list" class="achievement-list"></div>
+      </div>
+
+      <div class="panel tab-panel" id="panel-minigames" hidden>
+        <h2>Minispiele</h2>
+
+        <div class="minigame-card">
+          <div class="minigame-head">
+            <div>
+              <span class="minigame-name">🪙 Münzregen</span>
+              <p class="muted">Fange 20 Sekunden lang fallende Münzen!</p>
+            </div>
+            <button id="rain-btn" class="mini-btn">▶ Spielen</button>
+          </div>
+          <p class="muted" id="rain-info"></p>
+          <div id="rain-field" class="rain-field" hidden></div>
+          <div id="rain-hud" class="rain-hud" hidden></div>
+        </div>
+
+        <div class="minigame-card">
+          <div class="minigame-head">
+            <div>
+              <span class="minigame-name">🎡 Glücksrad</span>
+              <p class="muted">1× täglich gratis drehen!</p>
+            </div>
+            <button id="wheel-btn" class="mini-btn">🎡 Drehen</button>
+          </div>
+          <div class="wheel-wrap">
+            <div id="wheel" class="wheel"></div>
+            <span class="wheel-pointer">▼</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel tab-panel" id="panel-ranking" hidden>
+        <h2>Rangliste</h2>
+        <div class="rank-tabs">
+          <button class="rank-tab is-active" data-period="today">Heute</button>
+          <button class="rank-tab" data-period="3d">3 Tage</button>
+          <button class="rank-tab" data-period="7d">7 Tage</button>
+        </div>
+        <div class="rank-name-row">
+          <input id="rank-name-input" maxlength="12" placeholder="Dein Name">
+          <button id="rank-name-save" class="mini-btn">Speichern</button>
+        </div>
+        <div id="own-score" class="own-score"></div>
+        <div id="rank-list" class="rank-list"></div>
+      </div>
+
+      <div class="panel tab-panel" id="panel-stats" hidden>
+        <h2>Statistik</h2>
+        <div class="stats-grid" id="stats-grid"></div>
+        <button id="reset-btn" class="reset-btn">Spiel zurücksetzen</button>
+      </div>
+
+      <div class="panel tab-panel" id="panel-prestige" hidden>
+        <h2>Prestige</h2>
+        <p class="muted" id="prestige-info">Verdiene insgesamt 1.000 Münzen für deinen ersten Edelstein.</p>
+        <button id="prestige-btn" class="prestige-btn">💎 Prestige: +0 Edelsteine</button>
+
+        <div class="progress"><div id="prestige-progress-fill" class="progress-fill"></div></div>
+        <p class="muted" id="prestige-progress-text"></p>
+
+        <h2 class="sub">Edelstein-Shop</h2>
+        <p class="muted" id="perk-gems">Deine Edelsteine: 💎 0</p>
+        <div id="perk-list" class="perk-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom-Navigation -->
+  <nav class="bottom-nav" aria-label="Spielbereiche">
+    <button class="nav-item is-active" data-tab="upgrades"><span class="nav-emoji">⬆️</span><span>Upgrades</span></button>
+    <button class="nav-item" data-tab="daily"><span class="nav-emoji">🎁</span><span>Täglich</span></button>
+    <button class="nav-item" data-tab="achievements"><span class="nav-emoji">🏆</span><span>Erfolge</span></button>
+    <button class="nav-item" data-tab="minigames"><span class="nav-emoji">🎮</span><span>Spiele</span></button>
+    <button class="nav-item" data-tab="ranking"><span class="nav-emoji">🏅</span><span>Rang</span></button>
+    <button class="nav-item" data-tab="stats"><span class="nav-emoji">📊</span><span>Statistik</span></button>
+    <button class="nav-item" data-tab="prestige"><span class="nav-emoji">💎</span><span>Prestige</span></button>
+  </nav>
+
+  <!-- Banner-Werbeplatz. Ersetze diesen Platzhalter durch AdSense/AdMob (siehe README). -->
+  <div id="banner-ad" class="banner-ad" aria-hidden="true">📢 Werbung (Banner-Platzhalter)</div>
+
+  <!-- Tagesabschluss-Modal -->
+  <div id="summary-modal" class="modal" hidden>
+    <div class="modal-card">
+      <h2>🌙 Tagesabschluss</h2>
+      <p class="muted">Das hast du heute geschafft:</p>
+      <div id="summary-stats" class="summary-stats"></div>
+      <div class="summary-reward" id="summary-reward"></div>
+      <button id="summary-close" class="summary-close">Super, bis morgen! 👋</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script>window.OFFERWALL_SERVER_URL = "https://coin-tap-idle-events.t-meiners94.workers.dev";</script>
+  <script src="js/game.js"></script>
+</body>
+</html>
