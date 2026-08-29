@@ -166,7 +166,7 @@ function getPlayerName() {
 
 const EVENT_QUEUE = [];
 const FLUSH_INTERVAL_MS = 30000; // Alle 30 Sekunden gebündelt absenden
-const LEADERBOARD_UPDATE_INTERVAL_MS = 300000;
+const LEADERBOARD_UPDATE_INTERVAL_MS = 30000;
 const LEADERBOARD_MANUAL_COOLDOWN_MS = 30000;
 
 function flushEventQueue() {
@@ -1677,8 +1677,15 @@ async function init() {
   setInterval(playClock, 1000);
   setInterval(save, 5000);
   setInterval(pushStatsUpdate, 300000); // alle 5 Min. – schont das KV-Kontingent
-  setInterval(() => loadLeaderboard(currentRankPeriod), LEADERBOARD_UPDATE_INTERVAL_MS);
+  setInterval(() => {
+    if (document.visibilityState === "visible" || document.getElementById("panel-ranking")?.classList.contains("is-active")) {
+      loadLeaderboard(currentRankPeriod);
+    }
+  }, LEADERBOARD_UPDATE_INTERVAL_MS);
   document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      loadLeaderboard(currentRankPeriod);
+    }
     if (document.visibilityState === "hidden") {
       save();
       pushStatsUpdate();
