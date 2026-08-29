@@ -217,13 +217,25 @@ function trackEvent(name, params) {
     console.warn("Event-Tracking fehlgeschlagen:", err);
   }
   console.debug("[event]", name, payload);
-
-  // --- NEU: Statt direkter fetch()-Requests wandert das Event in die Queue ---
-  EVENT_QUEUE.push(payload);
   
-  // Wichtige Meilensteine oder das erste Event direkt rausschicken
-  if (name === "game_start" || name === "achievement_unlocked" || name === "prestige_done") {
-    flushEventQueue();
+  // Statt game_start blind in die Queue zu werfen:
+  if (name === "game_start") {
+    // Direkt einzeln abschicken, damit der Worker sofort die Session anlegt!
+    const serverUrl = window.OFFERWALL_SERVER_URL;
+    if (serverUrl) {
+      fetch(`${serverUrl}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload), // Einzelnes Objekt statt Array!
+      }).catch((err) => console.warn("game_start Direktversand fehlgeschlagen:", err));
+    }
+  } else {
+    // Alle anderen Events (wie stats_update) wandern normal in die Queue
+    EVENT_QUEUE.push(payload);
+    
+    if (name === "achievement_unlocked" || name === "prestige_done") {
+      flushEventQueue();
+    }
   }
 }
 
