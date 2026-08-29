@@ -1099,6 +1099,7 @@ async function loadLeaderboard(period) {
   });
 
   const list = document.getElementById("rank-list");
+  renderOwnScore(getLocalOwnScore(), period);
   const serverUrl = window.OFFERWALL_SERVER_URL;
   if (!serverUrl) {
     list.innerHTML = `<div class="muted">Kein Server verbunden – das Ranking braucht den Cloudflare Worker.</div>`;
@@ -1120,11 +1121,37 @@ async function loadLeaderboard(period) {
   }
 }
 
+function getLocalOwnScore() {
+  ensureDailyStats();
+  const d = state.dailyStats;
+  const score = Math.round(
+    d.earned * 0.02 +
+    d.taps * 2 +
+    d.upgrades * 250 +
+    d.questsDone * 500 +
+    d.minigames * 300 +
+    d.prestiges * 5000 +
+    d.gemsEarned * 10000
+  );
+
+  return {
+    local: true,
+    score,
+    earned: d.earned,
+    taps: d.taps,
+    upgrades: d.upgrades,
+    quests: d.questsDone,
+    minigames: d.minigames,
+    prestiges: d.prestiges,
+    gems: d.gemsEarned,
+  };
+}
+
 function renderOwnScore(you, period) {
   const box = document.getElementById("own-score");
   if (!box) return;
 
-  const periodLabel = period === "today" ? "Heute" : period === "3d" ? "3 Tage" : "7 Tage";
+  const periodLabel = you.local ? "Heute, lokal" : period === "today" ? "Heute" : period === "3d" ? "3 Tage" : "7 Tage";
 
   if (!you) {
     box.innerHTML = `<div class="own-score-card muted">Noch keine Punkte in diesem Zeitraum – spiel los! 🎮</div>`;
@@ -1146,7 +1173,7 @@ function renderOwnScore(you, period) {
       <div class="own-head">
         <span>Deine Punkte (${periodLabel})</span>
         <span class="own-total">${FMT.format(you.score)} Pkt.</span>
-        <span class="own-rank">Platz #${you.rank}</span>
+        <span class="own-rank">${you.local ? "Noch nicht synchronisiert" : `Platz #${you.rank}`}</span>
       </div>
       <div class="own-breakdown">
         ${parts.map(([label, value, points]) => `
