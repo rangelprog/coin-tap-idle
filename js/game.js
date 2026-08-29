@@ -859,6 +859,10 @@ function render() {
   renderDailySummary();
   renderAchievements();
   renderStats();
+  const rankingPanel = document.getElementById("panel-ranking");
+  if (rankingPanel && rankingPanel.classList.contains("is-active")) {
+    renderOwnScore(getLocalOwnScore(), currentRankPeriod);
+  }
   renderPerks();
   renderMinigames();
 
