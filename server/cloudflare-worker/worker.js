@@ -80,16 +80,16 @@ async function handleEvent(request, env) {
 
   // 1) Grundlegende Formprüfung
   if (!sessionId || typeof sessionId !== "string" || sessionId.length < 4) {
-    return json({ ok: false, reason: "bad_session" }, 400);
+    return json({ ok: false, reason: "bad_session", debug_name: name }, 400);
   }
   if (!VALID_EVENTS.has(name)) {
-    return json({ ok: false, reason: "bad_event" }, 400);
+    return json({ ok: false, reason: "bad_event", received_name: name }, 400);
   }
   if (!antiCheatOk) {
     return json({ ok: false, reason: "anti_cheat_flagged" }, 403);
   }
   if (typeof ts !== "number" || ts > now + CLOCK_SKEW_MS || ts < now - EVENT_MAX_AGE_MS) {
-    return json({ ok: false, reason: "bad_timestamp" }, 400);
+    return json({ ok: false, reason: "bad_timestamp", ts, now }, 400);
   }
 
   const kv = env.GAME_KV;
@@ -289,7 +289,8 @@ function computeScore(s) {
 
 function periodDays(period) {
   const days = [];
-  const count = period === "today" ? 1 : period === "3d" ? 3 : period === "7d" ? 7 : 0;
+  // Falls die Perioden-Strings abweichen, hier direkt mappen:
+  const count = (period === "today" || period === "1d") ? 1 : period === "3d" ? 3 : period === "7d" ? 7 : 1;
   if (!count) return null;
   for (let i = 0; i < count; i++) {
     days.push(dateKey(Date.now() - i * 86400000));
@@ -308,21 +309,26 @@ function num(v) {
 }
 
 async function maybePostback(env, event) {
-  const postbackUrl = env.OFFERWALL_POSTBACK_URL;
-  const secret = env.OFFERWALL_SECRET;
-  if (!postbackUrl || !secret) return; // Noch kein Netzwerk konfiguriert
+  try {
+    const postbackUrl = env.OFFERWALL_POSTBACK_URL;
+    const secret = env.OFFERWALL_SECRET;
+    if (!postbackUrl || !secret) return; // Kein Netzwerk konfiguriert -> einfach ignorieren
 
-  const payload = JSON.stringify(event);
-  const signature = await hmacSha256(secret, payload);
+    const payload = JSON.stringify(event);
+    const signature = await hmacSha256(secret, payload);
 
-  await fetch(postbackUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Signature": signature,
-    },
-    body: payload,
-  });
+    await fetch(postbackUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Signature": signature,
+      },
+      body: payload,
+    });
+  } catch (err) {
+    // Verhindert, dass Postback-Fehler den Event-Worker mit 400/500er zerschießen
+    console.error("Postback failed:", err);
+  }
 }
 
 async function hmacSha256(secret, data) {

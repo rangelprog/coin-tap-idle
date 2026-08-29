@@ -1540,7 +1540,8 @@ function init() {
   applyOfflineEarnings();
   applyUpgradeEffects();
   render();
-  trackEvent(EVENTS.GAME_START, { version: "1.2.0" });
+
+  await trackEvent(EVENTS.GAME_START, { version: "1.2.0" });
 
   document.getElementById("coin-btn").addEventListener("click", tapCoin);
   document.getElementById("boost-btn").addEventListener("click", requestBoost);
