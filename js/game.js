@@ -1070,6 +1070,7 @@ function claimDailySummary() {
 let currentRankPeriod = "today";
 let leaderboardManualDeadline = 0;
 let leaderboardRequestActive = false;
+let leaderboardRequestToken = 0;
 
 function leaderboardCountdown() {
   const remaining = Math.max(0, leaderboardManualDeadline - Date.now());
@@ -1126,6 +1127,38 @@ function escapeHtml(str) {
   })[c]);
 }
 
+function getLocalOwnLeaderboardEntry() {
+  const local = getLocalOwnScore();
+  return {
+    player: getPlayerId(),
+    name: getPlayerName(),
+    score: local.score,
+    earned: local.earned,
+    taps: local.taps,
+    upgrades: local.upgrades,
+    quests: local.quests,
+    minigames: local.minigames,
+    prestiges: local.prestiges,
+    gems: local.gems,
+    local: true,
+  };
+}
+
+function mergeLocalLeaderboardRow(row) {
+  const local = getLocalOwnLeaderboardEntry();
+  if (!row || row.player !== local.player) return row || null;
+  const localScore = Number(local.score) || 0;
+  const rowScore = Number(row.score) || 0;
+  if (localScore <= rowScore) return row;
+  return {
+    ...row,
+    ...local,
+    rank: row.rank || 1,
+    score: local.score,
+    local: true,
+  };
+}
+
 async function loadLeaderboard(period) {
   currentRankPeriod = period;
   document.querySelectorAll(".rank-tab").forEach((btn) => {
@@ -1140,7 +1173,7 @@ async function loadLeaderboard(period) {
     return;
   }
 
-  if (leaderboardRequestActive) return;
+  const requestToken = ++leaderboardRequestToken;
   leaderboardRequestActive = true;
   list.innerHTML = `<div class="muted">Lade Rangliste…</div>`;
   try {
@@ -1148,16 +1181,27 @@ async function loadLeaderboard(period) {
       cache: "no-store",
     });
     const data = await res.json();
+    if (requestToken !== leaderboardRequestToken) return;
     if (!data.ok || !Array.isArray(data.leaderboard)) {
       throw new Error(data.reason || "bad_response");
     }
-    renderOwnScore(data.you || getLocalOwnScore(), period);
-    renderRanking(data.leaderboard);
+
+    const localYou = getLocalOwnLeaderboardEntry();
+    const serverYou = data.you || null;
+    const renderYou = serverYou && serverYou.player === localYou.player && (Number(serverYou.score) || 0) >= (Number(localYou.score) || 0)
+      ? serverYou
+      : localYou;
+
+    renderOwnScore(renderYou, period);
+    renderRanking(data.leaderboard.map((row) => mergeLocalLeaderboardRow(row)));
   } catch (err) {
+    if (requestToken !== leaderboardRequestToken) return;
     console.warn("Rangliste laden fehlgeschlagen:", err);
     list.innerHTML = `<div class="muted">Rangliste konnte nicht geladen werden (${escapeHtml(err.message)}).</div>`;
   } finally {
-    leaderboardRequestActive = false;
+    if (requestToken === leaderboardRequestToken) {
+      leaderboardRequestActive = false;
+    }
   }
 }
 
@@ -1236,13 +1280,14 @@ function renderRanking(rows) {
   const myId = getPlayerId();
   list.innerHTML = "";
   for (const row of rows) {
-    const medal = row.rank === 1 ? "🥇" : row.rank === 2 ? "🥈" : row.rank === 3 ? "🥉" : `#${row.rank}`;
+    const displayRow = row.player === myId ? mergeLocalLeaderboardRow(row) || row : row;
+    const medal = displayRow.rank === 1 ? "🥇" : displayRow.rank === 2 ? "🥈" : displayRow.rank === 3 ? "🥉" : `#${displayRow.rank}`;
     const item = document.createElement("div");
-    item.className = row.player === myId ? "rank-row me" : "rank-row";
+    item.className = displayRow.player === myId ? "rank-row me" : "rank-row";
     item.innerHTML = `
       <span class="rank-pos">${medal}</span>
-      <span class="rank-name">${escapeHtml(row.name)}</span>
-      <span class="rank-score">${FMT.format(row.score)} Pkt.</span>`;
+      <span class="rank-name">${escapeHtml(displayRow.name)}</span>
+      <span class="rank-score">${FMT.format(displayRow.score)} Pkt.</span>`;
     list.appendChild(item);
   }
 }
