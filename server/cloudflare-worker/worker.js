@@ -71,6 +71,28 @@ async function handleEvent(request, env) {
     return json({ ok: false, reason: "bad_json" }, 400);
   }
 
+  if (Array.isArray(body)) {
+    if (body.length === 0) {
+      return json({ ok: false, reason: "empty_batch" }, 400);
+    }
+
+    const events = [];
+    for (const event of body) {
+      const result = await handleEventBody(event, env);
+      if (result.status >= 400) return result;
+      events.push(event.name);
+    }
+    return json({ ok: true, events });
+  }
+
+  return handleEventBody(body, env);
+}
+
+async function handleEventBody(body, env) {
+  if (!body || typeof body !== "object") {
+    return json({ ok: false, reason: "bad_event_body" }, 400);
+  }
+
   const now = Date.now();
   const name = body.name;
   const ts = body.ts;

@@ -74,6 +74,9 @@ Request:
 }
 ```
 
+Der Endpoint akzeptiert auch ein Array solcher Event-Objekte, damit mehrere
+Events gemeinsam gesendet werden können.
+
 Antworten:
 
 | Status | Bedeutung |
