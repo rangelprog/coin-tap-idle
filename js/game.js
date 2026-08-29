@@ -1542,6 +1542,8 @@ async function init() {
   render();
 
   await trackEvent(EVENTS.GAME_START, { version: "1.2.0" });
+  
+  pushStatsUpdate();
 
   document.getElementById("coin-btn").addEventListener("click", tapCoin);
   document.getElementById("boost-btn").addEventListener("click", requestBoost);
@@ -1583,7 +1585,6 @@ async function init() {
   setInterval(playClock, 1000);
   setInterval(save, 5000);
   setInterval(pushStatsUpdate, 300000); // alle 5 Min. – schont das KV-Kontingent
-  pushStatsUpdate();
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       save();
