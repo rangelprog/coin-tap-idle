@@ -1078,6 +1078,12 @@ function leaderboardCountdown() {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function leaderboardCooldownProgress() {
+  if (leaderboardManualDeadline <= Date.now()) return 100;
+  const elapsed = LEADERBOARD_MANUAL_COOLDOWN_MS - (leaderboardManualDeadline - Date.now());
+  return Math.max(0, Math.min(100, (elapsed / LEADERBOARD_MANUAL_COOLDOWN_MS) * 100));
+}
+
 setInterval(() => {
   const rankingPanel = document.getElementById("panel-ranking");
   if (rankingPanel && rankingPanel.classList.contains("is-active")) {
@@ -1208,7 +1214,7 @@ function renderOwnScore(you, period) {
         <span>Deine Punkte (${periodLabel})</span>
         <span class="own-total">${FMT.format(you.score)} Pkt.</span>
         <span class="own-rank">${you.local ? "" : `Platz #${you.rank}`}</span>
-        <button type="button" class="mini-btn own-refresh" data-action="refresh-ranking" aria-label="Rangliste aktualisieren" title="Rangliste aktualisieren" ${leaderboardRequestActive || Date.now() < leaderboardManualDeadline ? "disabled" : ""}>↻</button>
+        <button type="button" class="mini-btn own-refresh" data-action="refresh-ranking" aria-label="Rangliste aktualisieren" title="Rangliste aktualisieren" style="--cooldown-progress: ${leaderboardCooldownProgress()}%" ${leaderboardRequestActive || Date.now() < leaderboardManualDeadline ? "disabled" : ""}>↻</button>
       </div>
       <div class="own-breakdown">
         ${parts.map(([label, value, points]) => `

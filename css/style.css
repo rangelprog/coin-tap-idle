@@ -889,7 +889,13 @@ body {
   padding: 0;
   font-size: 1.25rem;
   line-height: 1;
+  background: linear-gradient(90deg, #0ea5e9 0 var(--cooldown-progress), #4b5563 var(--cooldown-progress) 100%);
   white-space: nowrap;
+}
+
+.own-refresh:disabled {
+  filter: none;
+  opacity: 1;
 }
 
 .own-breakdown {
