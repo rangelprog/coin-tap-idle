@@ -1535,7 +1535,7 @@ function playClock() {
 
 /* ---------- Events / Init ---------- */
 
-function init() {
+async function init() {
   load();
   applyOfflineEarnings();
   applyUpgradeEffects();
