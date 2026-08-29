@@ -5,6 +5,8 @@
    Werbe-Integration: siehe AdBridge unten + README (AdMob/AdSense)
    ============================================================ */
 
+window.sessionActive = false;
+
 const SAVE_KEY = "coin-tap-idle-save-v1";
 const TICK_MS = 100;
 const OFFLINE_CAP_SECONDS = 8 * 3600; // max. 8h Offline-Ertrag
@@ -1050,8 +1052,10 @@ function claimDailySummary() {
 let currentRankPeriod = "today";
 
 function pushStatsUpdate() {
-  if (!window.sessionActive) console.log("bad session");
-  
+  if (!window.sessionActive) {
+    console.log("bad session - abgewartet");
+    return; // <--- HIER ABBRECHEN, DAMIT KEIN FETCH RAUSGEHT!
+  }
 
   ensureDailyStats();
   trackEvent(EVENTS.STATS_UPDATE, {
@@ -1545,6 +1549,8 @@ async function init() {
   render();
 
   await trackEvent(EVENTS.GAME_START, { version: "1.2.0" });
+
+  window.sessionActive = true;
 
   pushStatsUpdate();
 
