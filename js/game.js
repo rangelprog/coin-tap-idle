@@ -166,6 +166,7 @@ function getPlayerName() {
 
 const EVENT_QUEUE = [];
 const FLUSH_INTERVAL_MS = 30000; // Alle 30 Sekunden gebündelt absenden
+const LEADERBOARD_UPDATE_INTERVAL_MS = 300000;
 
 function flushEventQueue() {
   if (EVENT_QUEUE.length === 0) return;
@@ -1066,6 +1067,21 @@ function claimDailySummary() {
 /* ---------- Ranking ---------- */
 
 let currentRankPeriod = "today";
+let leaderboardUpdateDeadline = Date.now() + LEADERBOARD_UPDATE_INTERVAL_MS;
+
+function leaderboardCountdown() {
+  const remaining = Math.max(0, leaderboardUpdateDeadline - Date.now());
+  const minutes = Math.floor(remaining / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+setInterval(() => {
+  const rankingPanel = document.getElementById("panel-ranking");
+  if (rankingPanel && rankingPanel.classList.contains("is-active")) {
+    renderOwnScore(getLocalOwnScore(), currentRankPeriod);
+  }
+}, 1000);
 
 function pushStatsUpdate() {
   if (!window.sessionActive) {
@@ -1117,6 +1133,7 @@ async function loadLeaderboard(period) {
     if (!data.ok || !Array.isArray(data.leaderboard)) {
       throw new Error(data.reason || "bad_response");
     }
+    leaderboardUpdateDeadline = Date.now() + LEADERBOARD_UPDATE_INTERVAL_MS;
     renderOwnScore(data.you, period);
     renderRanking(data.leaderboard);
   } catch (err) {
@@ -1177,7 +1194,7 @@ function renderOwnScore(you, period) {
       <div class="own-head">
         <span>Deine Punkte (${periodLabel})</span>
         <span class="own-total">${FMT.format(you.score)} Pkt.</span>
-        <span class="own-rank">${you.local ? "Noch nicht synchronisiert" : `Platz #${you.rank}`}</span>
+        <span class="own-rank">${you.local ? `Nächstes Update in ${leaderboardCountdown()}` : `Platz #${you.rank} · Update in ${leaderboardCountdown()}`}</span>
       </div>
       <div class="own-breakdown">
         ${parts.map(([label, value, points]) => `
