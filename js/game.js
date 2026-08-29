@@ -1050,7 +1050,7 @@ function claimDailySummary() {
 let currentRankPeriod = "today";
 
 function pushStatsUpdate() {
-  if (!window.sessionActive) Console.console.log("bad session");
+  if (!window.sessionActive) console.log("bad session");
   
 
   ensureDailyStats();
