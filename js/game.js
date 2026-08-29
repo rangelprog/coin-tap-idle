@@ -1138,7 +1138,9 @@ async function loadLeaderboard(period) {
   leaderboardRequestActive = true;
   list.innerHTML = `<div class="muted">Lade Rangliste…</div>`;
   try {
-    const res = await fetch(`${serverUrl}/leaderboard?period=${period}&player_id=${encodeURIComponent(getPlayerId())}`);
+    const res = await fetch(`${serverUrl}/leaderboard?period=${period}&player_id=${encodeURIComponent(getPlayerId())}`, {
+      cache: "no-store",
+    });
     const data = await res.json();
     if (!data.ok || !Array.isArray(data.leaderboard)) {
       throw new Error(data.reason || "bad_response");
@@ -1205,8 +1207,8 @@ function renderOwnScore(you, period) {
       <div class="own-head">
         <span>Deine Punkte (${periodLabel})</span>
         <span class="own-total">${FMT.format(you.score)} Pkt.</span>
-        <span class="own-rank">${you.local ? "Lokaler Stand" : `Platz #${you.rank}`}</span>
-        <button type="button" class="mini-btn own-refresh" data-action="refresh-ranking" ${leaderboardRequestActive || Date.now() < leaderboardManualDeadline ? "disabled" : ""}>${leaderboardRequestActive ? "Aktualisiere…" : Date.now() < leaderboardManualDeadline ? `Aktualisieren (${leaderboardCountdown()})` : "Aktualisieren"}</button>
+        <span class="own-rank">${you.local ? "" : `Platz #${you.rank}`}</span>
+        <button type="button" class="mini-btn own-refresh" data-action="refresh-ranking" aria-label="Rangliste aktualisieren" title="Rangliste aktualisieren" ${leaderboardRequestActive || Date.now() < leaderboardManualDeadline ? "disabled" : ""}>↻</button>
       </div>
       <div class="own-breakdown">
         ${parts.map(([label, value, points]) => `
