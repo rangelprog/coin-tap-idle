@@ -1050,6 +1050,9 @@ function claimDailySummary() {
 let currentRankPeriod = "today";
 
 function pushStatsUpdate() {
+  if (!window.sessionActive) Console.console.log("bad session");
+  
+
   ensureDailyStats();
   trackEvent(EVENTS.STATS_UPDATE, {
     day: todayKey(),
@@ -1542,7 +1545,7 @@ async function init() {
   render();
 
   await trackEvent(EVENTS.GAME_START, { version: "1.2.0" });
-  
+
   pushStatsUpdate();
 
   document.getElementById("coin-btn").addEventListener("click", tapCoin);
