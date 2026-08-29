@@ -53,7 +53,12 @@ export default {
       return withCors(json({ ok: true, service: "coin-tap-idle-events" }));
     }
     if (url.pathname === "/events" && request.method === "POST") {
-      return withCors(await handleEvent(request, env));
+      try {
+        return withCors(await handleEvent(request, env));
+      } catch (err) {
+        console.error("Event handling failed:", err);
+        return withCors(json({ ok: false, reason: "internal_error" }, 500));
+      }
     }
     if (url.pathname === "/leaderboard" && request.method === "GET") {
       return withCors(await handleLeaderboard(request, env));

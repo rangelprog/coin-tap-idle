@@ -864,6 +864,7 @@ body {
 .own-head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 0.85rem;
   font-weight: 700;
@@ -879,6 +880,10 @@ body {
 
 .own-rank {
   color: var(--purple);
+  white-space: nowrap;
+}
+
+.own-refresh {
   white-space: nowrap;
 }
 

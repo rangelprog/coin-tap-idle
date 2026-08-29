@@ -167,6 +167,7 @@ function getPlayerName() {
 const EVENT_QUEUE = [];
 const FLUSH_INTERVAL_MS = 30000; // Alle 30 Sekunden gebündelt absenden
 const LEADERBOARD_UPDATE_INTERVAL_MS = 300000;
+const LEADERBOARD_MANUAL_COOLDOWN_MS = 30000;
 
 function flushEventQueue() {
   if (EVENT_QUEUE.length === 0) return;
@@ -1067,10 +1068,11 @@ function claimDailySummary() {
 /* ---------- Ranking ---------- */
 
 let currentRankPeriod = "today";
-let leaderboardUpdateDeadline = Date.now() + LEADERBOARD_UPDATE_INTERVAL_MS;
+let leaderboardManualDeadline = 0;
+let leaderboardRequestActive = false;
 
 function leaderboardCountdown() {
-  const remaining = Math.max(0, leaderboardUpdateDeadline - Date.now());
+  const remaining = Math.max(0, leaderboardManualDeadline - Date.now());
   const minutes = Math.floor(remaining / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
@@ -1082,6 +1084,12 @@ setInterval(() => {
     renderOwnScore(getLocalOwnScore(), currentRankPeriod);
   }
 }, 1000);
+
+function refreshLeaderboard() {
+  if (leaderboardRequestActive || Date.now() < leaderboardManualDeadline) return;
+  leaderboardManualDeadline = Date.now() + LEADERBOARD_MANUAL_COOLDOWN_MS;
+  loadLeaderboard(currentRankPeriod);
+}
 
 function pushStatsUpdate() {
   if (!window.sessionActive) {
@@ -1126,6 +1134,8 @@ async function loadLeaderboard(period) {
     return;
   }
 
+  if (leaderboardRequestActive) return;
+  leaderboardRequestActive = true;
   list.innerHTML = `<div class="muted">Lade Rangliste…</div>`;
   try {
     const res = await fetch(`${serverUrl}/leaderboard?period=${period}&player_id=${encodeURIComponent(getPlayerId())}`);
@@ -1133,12 +1143,13 @@ async function loadLeaderboard(period) {
     if (!data.ok || !Array.isArray(data.leaderboard)) {
       throw new Error(data.reason || "bad_response");
     }
-    leaderboardUpdateDeadline = Date.now() + LEADERBOARD_UPDATE_INTERVAL_MS;
-    renderOwnScore(data.you, period);
+    renderOwnScore(data.you || getLocalOwnScore(), period);
     renderRanking(data.leaderboard);
   } catch (err) {
     console.warn("Rangliste laden fehlgeschlagen:", err);
     list.innerHTML = `<div class="muted">Rangliste konnte nicht geladen werden (${escapeHtml(err.message)}).</div>`;
+  } finally {
+    leaderboardRequestActive = false;
   }
 }
 
@@ -1194,7 +1205,8 @@ function renderOwnScore(you, period) {
       <div class="own-head">
         <span>Deine Punkte (${periodLabel})</span>
         <span class="own-total">${FMT.format(you.score)} Pkt.</span>
-        <span class="own-rank">${you.local ? `Nächstes Update in ${leaderboardCountdown()}` : `Platz #${you.rank} · Update in ${leaderboardCountdown()}`}</span>
+        <span class="own-rank">${you.local ? "Lokaler Stand" : `Platz #${you.rank}`}</span>
+        <button type="button" class="mini-btn own-refresh" data-action="refresh-ranking" ${leaderboardRequestActive || Date.now() < leaderboardManualDeadline ? "disabled" : ""}>${leaderboardRequestActive ? "Aktualisiere…" : Date.now() < leaderboardManualDeadline ? `Aktualisieren (${leaderboardCountdown()})` : "Aktualisieren"}</button>
       </div>
       <div class="own-breakdown">
         ${parts.map(([label, value, points]) => `
@@ -1634,6 +1646,9 @@ async function init() {
   document.querySelectorAll(".rank-tab").forEach((btn) => {
     btn.addEventListener("click", () => loadLeaderboard(btn.dataset.period));
   });
+  document.getElementById("own-score").addEventListener("click", (event) => {
+    if (event.target.closest('[data-action="refresh-ranking"]')) refreshLeaderboard();
+  });
 
   const nameInput = document.getElementById("rank-name-input");
   if (nameInput) nameInput.value = getPlayerName();
@@ -1654,6 +1669,7 @@ async function init() {
   setInterval(playClock, 1000);
   setInterval(save, 5000);
   setInterval(pushStatsUpdate, 300000); // alle 5 Min. – schont das KV-Kontingent
+  setInterval(() => loadLeaderboard(currentRankPeriod), LEADERBOARD_UPDATE_INTERVAL_MS);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       save();
